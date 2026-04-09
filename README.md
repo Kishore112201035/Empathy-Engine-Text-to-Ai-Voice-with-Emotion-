@@ -82,7 +82,7 @@ Input Text
 
 ## 🐳 Run with Docker
 
-You can also run the Empathy Engine using Docker (no manual setup required).
+You can run the Empathy Engine using Docker (no manual setup required).
 
 ### Prerequisites
 - Docker installed
@@ -95,9 +95,6 @@ cd empathy-engine
 
 # Build and start the container
 docker-compose up --build
----
-## Run Manually
-
 ### Prerequisites
 - Python 3.9+
 - `ffmpeg` installed on your system (required by pydub for audio conversion)

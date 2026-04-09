@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empathy Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0b0c10;
+      --surface:  #12141a;
+      --surface2: #181b24;
+      --border:   #1e2130;
+      --accent:   #00e5c0;
+      --accent2:  #7c5cfc;
+      --text:     #e8eaf2;
+      --muted:    #6b7280;
+      --warn:     #ff5f6d;
+      --radius:   12px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 2rem 1rem 4rem;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
+    .shell { position: relative; z-index: 1; width: 100%; max-width: 760px; }
+
+    header { text-align: center; margin-bottom: 2.5rem; }
+    .logo-mark {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-family: 'Space Mono', monospace; font-size: .75rem;
+      letter-spacing: .2em; color: var(--accent); text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .logo-mark span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .tagline { color: var(--muted); margin-top: .5rem; font-size: .9rem; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.25rem;
+    }
+    label { display: block; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+    textarea {
+      width: 100%; min-height: 130px; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px; padding: .85rem 1rem;
+      font-family: 'Syne', sans-serif; font-size: 1rem; resize: vertical; outline: none;
+      transition: border-color .2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+    .char-count { text-align: right; font-size: .72rem; color: var(--muted); margin-top: .3rem; font-family: 'Space Mono', monospace; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .8rem 1.8rem; border-radius: 8px; border: none;
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0b0c10; width: 100%; justify-content: center; margin-top: 1rem;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,192,.2); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(0,0,0,.3); border-top-color: #0b0c10; animation: spin .6s linear infinite; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result ────────────────────────────────────────── */
+    #result { display: none; }
+    .section-label { font-size: .7rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .7rem; }
+
+    /* Sentence-level breakdown */
+    .sentence-list { display: flex; flex-direction: column; gap: .6rem; }
+    .sentence-row {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: .75rem 1rem;
+      border-left: 3px solid var(--border);
+      transition: border-left-color .3s;
+    }
+    .sentence-row:hover { border-left-color: var(--accent); }
+
+    .sentence-meta {
+      display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      margin-bottom: .4rem;
+    }
+    .emotion-chip {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .2rem .65rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: capitalize;
+    }
+    .tag-pill {
+      font-family: 'Space Mono', monospace; font-size: .65rem;
+      background: rgba(0,229,192,.08); color: var(--accent);
+      border: 1px solid rgba(0,229,192,.2); border-radius: 4px;
+      padding: .15rem .45rem;
+    }
+    .intensity-mini {
+      margin-left: auto; font-family: 'Space Mono', monospace;
+      font-size: .68rem; color: var(--muted);
+    }
+    .sentence-text { font-size: .9rem; line-height: 1.5; color: var(--text); }
+
+    .note {
+      font-size: .72rem; color: var(--muted);
+      background: rgba(124,92,252,.06); border: 1px solid rgba(124,92,252,.15);
+      border-radius: 6px; padding: .5rem .8rem; margin-bottom: 1rem;
+      font-family: 'Space Mono', monospace;
+    }
+    .note strong { color: var(--accent2); }
+
+    /* Audio */
+    .audio-wrap { margin-top: 1.2rem; }
+    audio { width: 100%; margin-bottom: .75rem; border-radius: 8px; }
+    .btn-download {
+      background: transparent; border: 1px solid var(--accent);
+      color: var(--accent); font-size: .85rem; padding: .55rem 1.2rem;
+    }
+    .btn-download:hover { background: rgba(0,229,192,.08); }
+
+    .error-box {
+      background: rgba(255,95,109,.08); border: 1px solid rgba(255,95,109,.3);
+      border-radius: 8px; padding: .85rem 1rem; color: var(--warn);
+      font-size: .9rem; display: none; margin-top: .75rem;
+    }
+
+    /* Emotion chip colours */
+    .em-anger      { background: rgba(255,95,109,.15); color: #ff5f6d; }
+    .em-sadness    { background: rgba(100,130,255,.15); color: #7c9fff; }
+    .em-excited    { background: rgba(255,215,0,.15);   color: #ffd700; }
+    .em-happy      { background: rgba(0,229,192,.15);   color: #00e5c0; }
+    .em-anxious    { background: rgba(255,165,0,.15);   color: #ffaa40; }
+    .em-inquisitive{ background: rgba(124,92,252,.15);  color: #a87fff; }
+    .em-surprised  { background: rgba(255,100,200,.15); color: #ff78d2; }
+    .em-concerned  { background: rgba(255,200,100,.15); color: #ffcc66; }
+    .em-frustrated { background: rgba(200,100,100,.15); color: #e07070; }
+    .em-neutral    { background: rgba(107,114,128,.15); color: #9ca3af; }
+
+    footer { margin-top: 3rem; text-align: center; font-size: .72rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="logo-mark"><span></span> Empathy Engine v2</div>
+    <h1>Give AI a Human Voice</h1>
+    <p class="tagline">Each sentence detected individually · emotion tags are parameters, not words · audio stitched seamlessly</p>
+  </header>
+
+  <div class="card">
+    <label for="textInput">Your Text (multi-sentence passages work best)</label>
+    <textarea id="textInput" maxlength="1500"
+      placeholder="e.g. I'm really excited about the results! But I'm also a bit anxious about what comes next. When I saw the update, I was genuinely surprised. I feel concerned about a few issues that might arise. Some delays made me quite frustrated. There were moments of deep sadness too. Now I'm just trying to stay neutral and figure things out."></textarea>
+    <div class="char-count"><span id="charCount">0</span> / 1500</div>
+    <div id="errorBox" class="error-box"></div>
+    <button class="btn btn-primary" id="synthesizeBtn" onclick="handleSynthesize()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnLabel">▶ &nbsp;Synthesize Speech</span>
+    </button>
+  </div>
+
+  <div class="card" id="result">
+    <div class="note">
+      <strong>How it works:</strong> Brackets below are <strong>display annotations only</strong> — they show what vocal parameters were applied to each sentence. The TTS engine never reads or speaks them.
+    </div>
+
+    <div class="section-label">Sentence-by-Sentence Emotion Analysis</div>
+    <div class="sentence-list" id="sentenceList"></div>
+
+    <div class="audio-wrap">
+      <div class="section-label" style="margin-top:1.2rem">Generated Audio — all sentences stitched</div>
+      <audio id="audioPlayer" controls></audio>
+      <br/>
+      <a id="downloadLink" class="btn btn-download" download>⬇ &nbsp;Download Audio</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>Empathy Engine · Sentence-level emotion modulation · brackets = vocal parameters, never spoken</footer>
+
+<script>
+  const EMOTION_META = {
+    anger:      { icon: "😡", cls: "em-anger" },
+    sadness:    { icon: "😢", cls: "em-sadness" },
+    excited:    { icon: "🤩", cls: "em-excited" },
+    happy:      { icon: "😊", cls: "em-happy" },
+    anxious:    { icon: "😰", cls: "em-anxious" },
+    inquisitive:{ icon: "🤔", cls: "em-inquisitive" },
+    surprised:  { icon: "😲", cls: "em-surprised" },
+    concerned:  { icon: "😟", cls: "em-concerned" },
+    frustrated: { icon: "😤", cls: "em-frustrated" },
+    neutral:    { icon: "😐", cls: "em-neutral" },
+  };
+
+  const ta = document.getElementById("textInput");
+  ta.addEventListener("input", () => {
+    document.getElementById("charCount").textContent = ta.value.length;
+  });
+
+  async function handleSynthesize() {
+    const text = ta.value.trim();
+    if (!text) return;
+
+    const btn     = document.getElementById("synthesizeBtn");
+    const spinner = document.getElementById("spinner");
+    const label   = document.getElementById("btnLabel");
+    const errBox  = document.getElementById("errorBox");
+
+    btn.disabled = true;
+    spinner.style.display = "inline-block";
+    label.textContent = "Processing sentences…";
+    errBox.style.display = "none";
+    document.getElementById("result").style.display = "none";
+
+    try {
+      const res  = await fetch("/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) { showError(data.error || "Server error."); return; }
+      renderResult(data);
+    } catch (e) {
+      showError("Network error: " + e.message);
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = "none";
+      label.innerHTML = "▶ &nbsp;Synthesize Speech";
+    }
+  }
+
+  function renderResult(data) {
+    const list = document.getElementById("sentenceList");
+    list.innerHTML = "";
+
+    data.annotated_sentences.forEach(s => {
+      const meta = EMOTION_META[s.emotion] || EMOTION_META.neutral;
+      const pct  = Math.round(s.intensity * 100);
+
+      // Build tag pills
+      const tagPills = s.display_tags.map(t =>
+        `<span class="tag-pill">${t}</span>`
+      ).join(" ");
+
+      const row = document.createElement("div");
+      row.className = "sentence-row";
+      row.innerHTML = `
+        <div class="sentence-meta">
+          <span class="emotion-chip ${meta.cls}">${meta.icon} ${s.emotion}</span>
+          ${tagPills}
+          <span class="intensity-mini">${pct}% intensity</span>
+        </div>
+        <div class="sentence-text">${escHtml(s.original)}</div>
+      `;
+      list.appendChild(row);
+    });
+
+    // Audio
+    const player = document.getElementById("audioPlayer");
+    player.src = data.audio_url + "?t=" + Date.now();
+    player.load();
+    player.play().catch(() => {});
+
+    const dl = document.getElementById("downloadLink");
+    dl.href     = data.audio_url;
+    dl.download = "empathy_engine_output.mp3";
+
+    document.getElementById("result").style.display = "block";
+    document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function showError(msg) {
+    const box = document.getElementById("errorBox");
+    box.textContent = "⚠ " + msg;
+    box.style.display = "block";
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
+</body>
+</html>

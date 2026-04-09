@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  empathy-engine:
+    build: .
+    container_name: empathy-engine
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist generated audio files outside the container
+      - ./static/audio:/app/static/audio
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped

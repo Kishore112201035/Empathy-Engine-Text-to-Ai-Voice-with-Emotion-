@@ -5,4 +5,3 @@ numpy>=1.26.0
 soundfile>=0.12.1
 # pydub is NOT used — it breaks on Python 3.13 due to missing pyaudioop
 # Audio modulation is done via numpy + soundfile + ffmpeg subprocess instead
-docker build -t empathy-engine .

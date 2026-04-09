@@ -1,4 +1,4 @@
-# 🎙️ Empathy Engine
+#  Empathy Engine
 
 > *Dynamically modulates synthesized speech based on the detected emotion of the source text.*
 
@@ -79,7 +79,7 @@ Input Text
 ## Setup & Installation
 
 ---
-## 🐳 Run with Docker
+##  Run with Docker
 
 You can run the Empathy Engine using Docker (no manual setup required).
 
@@ -202,6 +202,20 @@ empathy-engine/
     └── audio/              # Generated audio files (auto-created)
 ```
 
+---
+
+##  Future Updates / Roadmap
+
+-  **Document-to-Speech (with OCR support)**
+  - Accept full documents (PDFs/images)
+  - Use OCR to extract text from scanned files
+  - Convert entire content into expressive speech output
+
+-  **Multiple Voice Profiles**
+  - Support different voice types (e.g., male, female, child)
+  - Allow users to select voice based on preference
+
+---
 ---
 
 ## License
